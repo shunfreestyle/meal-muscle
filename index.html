@@ -100,7 +100,8 @@ body::before{
 .rest-msg{font-size:13px;color:var(--white-dim);line-height:1.7}
 
 /* --- LIFT LOG --- */
-.chips-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none;position:sticky;top:0;z-index:10;background:var(--bg)}
+.lift-sticky-header{position:sticky;top:0;z-index:10;background:var(--bg);padding-top:max(env(safe-area-inset-top),16px);padding-bottom:8px}
+.chips-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
 .chips-scroll::-webkit-scrollbar{display:none}
 .chip{
   flex-shrink:0;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:500;
@@ -302,10 +303,12 @@ body::before{
 
 <!-- LIFT LOG SCREEN -->
 <div id="screen-lift" class="screen">
-  <div class="header fade-in">
-    <div class="header-title">筋トレ記録</div>
+  <div class="lift-sticky-header">
+    <div class="header fade-in">
+      <div class="header-title">筋トレ記録</div>
+    </div>
+    <div class="chips-scroll fade-in" id="exercise-chips"></div>
   </div>
-  <div class="chips-scroll fade-in" id="exercise-chips"></div>
 
   <div class="card fade-in" id="lift-target-card">
     <div class="next-target">
