@@ -247,6 +247,9 @@ body::before{
 
 /* Encourage */
 .encourage{font-size:13px;color:var(--white-dim);text-align:center;padding:20px 0;line-height:1.7}
+.btn-data{flex:1;padding:10px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:var(--bg);font-size:13px;font-weight:600;font-family:var(--font-body);cursor:pointer}
+.btn-data:active{opacity:0.8}
+.btn-data-secondary{background:var(--bg);border:1px solid var(--white-trace);color:var(--white-dim)}
 </style>
 </head>
 <body>
@@ -368,6 +371,16 @@ body::before{
     <div class="avg-pace" id="avg-pace"></div>
     <div class="run-list" id="run-list"></div>
   </div>
+
+  <div class="card fade-in">
+    <div class="card-title">データ管理</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-data" id="btn-export">エクスポート</button>
+      <button class="btn-data btn-data-secondary" id="btn-import">インポート</button>
+    </div>
+    <input type="file" id="file-import" accept=".json" style="display:none">
+    <div id="data-msg" style="font-size:11px;color:var(--white-muted);margin-top:8px;text-align:center"></div>
+  </div>
 </div>
 
 <!-- TAB BAR -->
@@ -391,9 +404,45 @@ body::before{
 // ——— UTILITIES ———
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
+const DATA_VERSION = 1;
 const LS = {
-  get(k) { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } },
-  set(k, v) { localStorage.setItem(k, JSON.stringify(v)) }
+  get(k) {
+    try {
+      const raw = localStorage.getItem(k);
+      if (raw === null) return null;
+      const parsed = JSON.parse(raw);
+      // Handle versioned format
+      if (parsed && typeof parsed === 'object' && parsed._v !== undefined) {
+        return parsed.data;
+      }
+      // Legacy unversioned data — return as-is
+      return parsed;
+    } catch { return null; }
+  },
+  set(k, v) {
+    try {
+      const wrapped = { _v: DATA_VERSION, _t: new Date().toISOString(), data: v };
+      localStorage.setItem(k, JSON.stringify(wrapped));
+    } catch (e) { console.warn('LS write failed:', k, e); }
+  },
+  keys() {
+    const result = [];
+    for (let i = 0; i < localStorage.length; i++) result.push(localStorage.key(i));
+    return result;
+  },
+  exportAll() {
+    const dump = {};
+    this.keys().forEach(k => {
+      try { dump[k] = JSON.parse(localStorage.getItem(k)); } catch { dump[k] = localStorage.getItem(k); }
+    });
+    return { exportVersion: DATA_VERSION, exportedAt: new Date().toISOString(), entries: dump };
+  },
+  importAll(json) {
+    if (!json || !json.entries) throw new Error('Invalid format');
+    Object.keys(json.entries).forEach(k => {
+      try { localStorage.setItem(k, JSON.stringify(json.entries[k])); } catch {}
+    });
+  }
 };
 
 function todayJST() {
@@ -864,6 +913,41 @@ $('#btn-run').addEventListener('click', () => {
   $('#inp-run-km').value = '';
   $('#inp-run-min').value = '';
   renderStats();
+});
+
+// ——— DATA EXPORT / IMPORT ———
+$('#btn-export').addEventListener('click', () => {
+  const data = LS.exportAll();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cockpit-backup-${dateStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  $('#data-msg').textContent = 'エクスポート完了';
+  setTimeout(() => $('#data-msg').textContent = '', 3000);
+});
+
+$('#btn-import').addEventListener('click', () => $('#file-import').click());
+$('#file-import').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const json = JSON.parse(ev.target.result);
+      LS.importAll(json);
+      $('#data-msg').textContent = 'インポート完了 — リロードします...';
+      setTimeout(() => location.reload(), 1000);
+    } catch (err) {
+      $('#data-msg').textContent = 'エラー: 無効なファイル形式';
+      $('#data-msg').style.color = '#F87171';
+      setTimeout(() => { $('#data-msg').textContent = ''; $('#data-msg').style.color = ''; }, 3000);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
 });
 
 // ——— SERVICE WORKER ———

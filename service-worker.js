@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cockpit-v7';
+const CACHE_NAME = 'cockpit-v8';
 const ASSETS = [
   './index.html',
   './manifest.json',
@@ -24,23 +24,19 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch — cache-first, fallback to network
+// Fetch — network-first, fallback to cache (ensures latest version is always served)
 self.addEventListener('fetch', e => {
-  // Skip non-GET and cross-origin requests
   if (e.request.method !== 'GET') return;
 
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      // Return cache hit, but also update cache in background
-      const fetchPromise = fetch(e.request).then(response => {
+    fetch(e.request)
+      .then(response => {
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
         }
         return response;
-      }).catch(() => cached);
-
-      return cached || fetchPromise;
-    })
+      })
+      .catch(() => caches.match(e.request))
   );
 });
