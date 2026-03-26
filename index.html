@@ -952,7 +952,15 @@ $('#file-import').addEventListener('change', e => {
 
 // ——— SERVICE WORKER ———
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js');
+  let refreshing = false;
+  navigator.serviceWorker.register('./service-worker.js').then(reg => {
+    // Check for updates every hour
+    setInterval(() => reg.update(), 60 * 60 * 1000);
+  });
+  // Auto-reload when new SW takes control
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) { refreshing = true; location.reload(); }
+  });
 }
 
 // ——— INIT ———
