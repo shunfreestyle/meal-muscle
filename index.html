@@ -149,14 +149,23 @@ body::before{
 }
 
 .history-list{margin-top:12px}
+.history-group{margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--white-faint)}
+.history-group:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.history-group-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .history-item{
   display:flex;justify-content:space-between;align-items:center;
-  padding:8px 0;border-bottom:1px solid var(--white-faint);
+  padding:4px 0;
   font-size:12px;font-family:var(--font-mono);
 }
-.history-item:last-child{border-bottom:none}
-.history-date{color:var(--white-muted)}
+.history-sub{padding-left:8px}
+.history-date{color:var(--white-muted);font-size:12px;font-family:var(--font-mono)}
 .history-val{color:var(--white-dim)}
+.btn-delete-history{
+  background:none;border:1px solid rgba(248,113,113,0.3);color:var(--red);
+  font-size:10px;padding:2px 8px;border-radius:6px;cursor:pointer;
+  font-family:var(--font-body);transition:all 0.15s;
+}
+.btn-delete-history:active{background:rgba(248,113,113,0.15)}
 
 /* --- STATS --- */
 .stat-big{text-align:center;padding:12px 0}
@@ -687,7 +696,14 @@ function renderLift() {
   const log = LS.get('lift-log') || {};
   const entries = (log[selectedExercise] || []).sort((a,b) => b.date.localeCompare(a.date));
 
-  // Last session & next target
+  // Group entries by date
+  const grouped = {};
+  entries.forEach(e => {
+    if (!grouped[e.date]) grouped[e.date] = [];
+    grouped[e.date].push(e);
+  });
+  const dates = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
+
   if (entries.length > 0) {
     const last = entries[0];
     $('#last-session').textContent = `前回: ${last.date} — ${last.weight}kg × ${last.reps}rep × ${last.sets}セット`;
@@ -697,20 +713,40 @@ function renderLift() {
 
     // PR
     const prWeight = Math.max(...entries.map(e => e.weight));
-    const wrap = $('#pr-badge-wrap');
-    wrap.innerHTML = `<span class="pr-badge">🏆 最高重量 ${prWeight}kg</span>`;
+    $('#pr-badge-wrap').innerHTML = `<span class="pr-badge">🏆 最高重量 ${prWeight}kg</span>`;
 
-    // Sparkline
-    renderSparkline(entries.slice(0, 8).reverse());
+    // Sparkline — one point per date, max weight that day
+    const sparkData = dates.slice(0, 8).reverse().map(d => {
+      const dayEntries = grouped[d];
+      const maxEntry = dayEntries.reduce((best, e) => e.weight > best.weight ? e : best, dayEntries[0]);
+      return { date: d, weight: maxEntry.weight, reps: maxEntry.reps };
+    });
+    renderSparkline(sparkData);
 
-    // History
+    // History — grouped by date
     const hist = $('#lift-history');
     hist.innerHTML = '';
-    entries.slice(0, 10).forEach(e => {
-      const el = document.createElement('div');
-      el.className = 'history-item';
-      el.innerHTML = `<span class="history-date">${e.date}</span><span class="history-val">${e.weight}kg × ${e.reps} × ${e.sets}</span>`;
-      hist.appendChild(el);
+    dates.slice(0, 10).forEach(d => {
+      const group = document.createElement('div');
+      group.className = 'history-group';
+      const header = document.createElement('div');
+      header.className = 'history-group-header';
+      header.innerHTML = `<span class="history-date">${d}</span><button class="btn-delete-history">削除</button>`;
+      header.querySelector('.btn-delete-history').addEventListener('click', () => {
+        if (!confirm(`${d}の記録を削除しますか？`)) return;
+        const log = LS.get('lift-log') || {};
+        log[selectedExercise] = (log[selectedExercise] || []).filter(e => e.date !== d);
+        LS.set('lift-log', log);
+        renderLift();
+      });
+      group.appendChild(header);
+      grouped[d].forEach(e => {
+        const row = document.createElement('div');
+        row.className = 'history-item history-sub';
+        row.innerHTML = `<span class="history-val">${e.weight}kg × ${e.reps}rep × ${e.sets}セット</span>`;
+        group.appendChild(row);
+      });
+      hist.appendChild(group);
     });
     $('#lift-history-card').style.display = '';
   } else {
@@ -745,23 +781,25 @@ function calcNextTarget(last) {
 function renderSparkline(data) {
   const wrap = $('#sparkline-wrap');
   if (data.length < 2) { wrap.innerHTML = ''; return; }
-  const w = 200, h = 50, pad = 8;
+  const w = 280, h = 80, padX = 20, padTop = 18, padBot = 8;
   const weights = data.map(d => d.weight);
   const min = Math.min(...weights) - 2;
   const max = Math.max(...weights) + 2;
   const range = max - min || 1;
-  const points = data.map((d, i) => {
-    const x = pad + (i / (data.length - 1)) * (w - pad * 2);
-    const y = h - pad - ((d.weight - min) / range) * (h - pad * 2);
-    return `${x},${y}`;
+  const coords = data.map((d, i) => {
+    const x = padX + (i / (data.length - 1)) * (w - padX * 2);
+    const y = padTop + (1 - (d.weight - min) / range) * (h - padTop - padBot);
+    return { x, y };
   });
+  const points = coords.map(c => `${c.x},${c.y}`).join(' ');
+  const labels = data.map((d, i) => {
+    const { x, y } = coords[i];
+    return `<text x="${x}" y="${y - 7}" text-anchor="middle" fill="#F0EEE9" fill-opacity="0.5" font-size="8" font-family="'DM Mono',monospace">${d.weight}kg/${d.reps}r</text>`;
+  }).join('');
   wrap.innerHTML = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-    <polyline points="${points.join(' ')}" fill="none" stroke="#F5A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    ${data.map((d, i) => {
-      const x = pad + (i / (data.length - 1)) * (w - pad * 2);
-      const y = h - pad - ((d.weight - min) / range) * (h - pad * 2);
-      return `<circle cx="${x}" cy="${y}" r="3" fill="#0A0A0B" stroke="#F5A623" stroke-width="1.5"/>`;
-    }).join('')}
+    <polyline points="${points}" fill="none" stroke="#F5A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${coords.map((c, i) => `<circle cx="${c.x}" cy="${c.y}" r="3" fill="#0A0A0B" stroke="#F5A623" stroke-width="1.5"/>`).join('')}
+    ${labels}
   </svg>`;
 }
 
