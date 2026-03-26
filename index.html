@@ -100,7 +100,7 @@ body::before{
 .rest-msg{font-size:13px;color:var(--white-dim);line-height:1.7}
 
 /* --- LIFT LOG --- */
-.chips-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
+.chips-scroll{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none;position:sticky;top:0;z-index:10;background:var(--bg)}
 .chips-scroll::-webkit-scrollbar{display:none}
 .chip{
   flex-shrink:0;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:500;
@@ -633,7 +633,7 @@ function renderToday() {
   const shopEl = $('#shopping-list');
   shopEl.innerHTML = '';
   const shopItems = SHOPPING.filter(s => !s.conditional || showProtein);
-  const allIds = [...trainingItems, ...mealIds, ...shopItems.map(s => `shop-${s.id}`)];
+  const allIds = [...trainingItems, ...mealIds];
   shopItems.forEach(s => {
     const id = `shop-${s.id}`;
     const el = document.createElement('div');
