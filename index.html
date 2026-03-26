@@ -607,10 +607,10 @@ function renderLift() {
   // Last session & next target
   if (entries.length > 0) {
     const last = entries[0];
-    $('#last-session').textContent = `前回: ${last.date} — ${last.weight}kg × ${last.reps}rep × ${last.sets}set`;
+    $('#last-session').textContent = `前回: ${last.date} — ${last.weight}kg × ${last.reps}rep × ${last.sets}セット`;
     const { weight: nw, reps: nr } = calcNextTarget(last);
-    $('#next-target-val').textContent = `${nw}kg × ${nr}rep`;
-    $('#next-target-sub').textContent = `${last.sets}セット目標`;
+    $('#next-target-val').textContent = `${nw}kg × ${nr}rep × ${last.sets}セット`;
+    $('#next-target-sub').textContent = '';
 
     // PR
     const prWeight = Math.max(...entries.map(e => e.weight));
