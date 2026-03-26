@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cockpit-v3';
+const CACHE_NAME = 'cockpit-v6';
 const ASSETS = [
   './index.html',
   './manifest.json',

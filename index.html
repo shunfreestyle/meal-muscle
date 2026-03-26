@@ -35,7 +35,7 @@ body::before{
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
 }
 #app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column}
-.screen{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 16px;padding-bottom:calc(80px + var(--safe-b));scrollbar-width:none}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 16px;padding-top:max(env(safe-area-inset-top),20px);padding-bottom:calc(80px + var(--safe-b));scrollbar-width:none}
 .screen::-webkit-scrollbar{display:none}
 .screen{display:none}.screen.active{display:block}
 
@@ -90,6 +90,8 @@ body::before{
 .check-item.checked .check-box svg{opacity:1}
 .check-label{font-size:14px;color:var(--white);transition:color 0.15s}
 .check-item.checked .check-label{color:var(--white-dim);text-decoration:line-through;text-decoration-color:var(--white-muted)}
+.check-sub{font-size:11px;color:var(--white-muted);font-family:var(--font-mono);margin-top:2px;text-decoration:none;display:block}
+.check-item.checked .check-sub{text-decoration:none;color:var(--white-muted);opacity:0.5}
 
 /* Rest day */
 .rest-card{text-align:center;padding:40px 20px}
@@ -235,7 +237,7 @@ body::before{
 
 /* Desktop */
 @media(min-width:640px){
-  .screen{max-width:480px;margin:0 auto;padding:32px 24px;padding-bottom:calc(90px + var(--safe-b))}
+  .screen{max-width:480px;margin:0 auto;padding:32px 24px;padding-top:max(env(safe-area-inset-top),32px);padding-bottom:calc(90px + var(--safe-b))}
 }
 
 /* header */
@@ -418,12 +420,45 @@ const SHOPPING = [
 ];
 
 const TRAINING_SCHEDULE = {
-  1: { name:'胸・肩の日', items:['ベンチプレス','ダンベルショルダープレス','インクラインダンベルプレス','サイドレイズ','アブローラ'] },
-  2: { name:'背中の日', items:['ラットプルダウン','シーテッドロウ','デッドリフト'] },
-  3: { name:'脚の日', items:['スクワット','ルーマニアンデッドリフト'] },
-  4: { name:'胸・肩の日', items:['ベンチプレス','ダンベルショルダープレス','インクラインダンベルプレス','サイドレイズ','アブローラ'] },
-  5: { name:'胸・肩の日', items:['ベンチプレス','ダンベルショルダープレス','インクラインダンベルプレス','サイドレイズ','アブローラ'] },
-  6: { name:'背中・脚の日', items:['ラットプルダウン','シーテッドロウ','スクワット','ルーマニアンデッドリフト'] },
+  1: { name:'胸・肩の日', items:[
+    { name:'ベンチプレス', target:'3セット × 8rep' },
+    { name:'ダンベルショルダープレス', target:'3セット × 8〜10rep' },
+    { name:'インクラインダンベルプレス', target:'3セット × 10rep' },
+    { name:'サイドレイズ', target:'3セット × 12〜15rep' },
+    { name:'アブローラ', target:'3セット × 10rep（膝つきOK）' },
+  ]},
+  2: { name:'背中の日', items:[
+    { name:'ラットプルダウン', target:'3セット × 10rep' },
+    { name:'シーテッドロウ', target:'3セット × 10rep' },
+    { name:'デッドリフト', target:'3セット × 8rep' },
+    { name:'フェイスプル', target:'3セット × 15rep' },
+  ]},
+  3: { name:'脚の日', items:[
+    { name:'バーベルスクワット', target:'3セット × 8rep' },
+    { name:'ルーマニアンデッドリフト', target:'3セット × 10rep' },
+    { name:'レッグプレス', target:'3セット × 12rep' },
+    { name:'カーフレイズ', target:'3セット × 15rep' },
+  ]},
+  4: { name:'胸・肩の日', items:[
+    { name:'ベンチプレス', target:'3セット × 8rep' },
+    { name:'ダンベルショルダープレス', target:'3セット × 8〜10rep' },
+    { name:'インクラインダンベルプレス', target:'3セット × 10rep' },
+    { name:'サイドレイズ', target:'3セット × 12〜15rep' },
+    { name:'アブローラ', target:'3セット × 10rep（膝つきOK）' },
+  ]},
+  5: { name:'胸・肩の日', items:[
+    { name:'ベンチプレス', target:'3セット × 8rep' },
+    { name:'ダンベルショルダープレス', target:'3セット × 8〜10rep' },
+    { name:'インクラインダンベルプレス', target:'3セット × 10rep' },
+    { name:'サイドレイズ', target:'3セット × 12〜15rep' },
+    { name:'アブローラ', target:'3セット × 10rep（膝つきOK）' },
+  ]},
+  6: { name:'背中・脚の日', items:[
+    { name:'ラットプルダウン', target:'3セット × 10rep' },
+    { name:'シーテッドロウ', target:'3セット × 10rep' },
+    { name:'バーベルスクワット', target:'3セット × 8rep' },
+    { name:'ルーマニアンデッドリフト', target:'3セット × 10rep' },
+  ]},
 };
 const REST_DAYS = [0]; // Sun=0
 
@@ -437,13 +472,12 @@ const MEAL_PROTEIN = [
   { id:'meal-protein-night', label:'プロテイン：就寝前（牛乳割り）' },
 ];
 
-const EXERCISES = ['ベンチプレス','スクワット','デッドリフト','ラットプルダウン','ダンベルショルダープレス','シーテッドロウ','ルーマニアンデッドリフト','サイドレイズ','アブローラ'];
+const EXERCISES = ['ベンチプレス','ダンベルショルダープレス','インクラインダンベルプレス','サイドレイズ','アブローラ','ラットプルダウン','シーテッドロウ','デッドリフト','フェイスプル','バーベルスクワット','ルーマニアンデッドリフト','レッグプレス','カーフレイズ'];
 
 const MUSCLE_MAP = {
-  'ベンチプレス':'chest','ダンベルショルダープレス':'chest','インクラインダンベルプレス':'chest','サイドレイズ':'chest',
-  'ラットプルダウン':'back','シーテッドロウ':'back','デッドリフト':'back',
-  'スクワット':'legs','ルーマニアンデッドリフト':'legs',
-  'アブローラ':'chest'
+  'ベンチプレス':'chest','ダンベルショルダープレス':'chest','インクラインダンベルプレス':'chest','サイドレイズ':'chest','アブローラ':'chest',
+  'ラットプルダウン':'back','シーテッドロウ':'back','デッドリフト':'back','フェイスプル':'back',
+  'バーベルスクワット':'legs','ルーマニアンデッドリフト':'legs','レッグプレス':'legs','カーフレイズ':'legs'
 };
 
 // ——— STATE ———
@@ -487,11 +521,11 @@ function renderToday() {
     card.innerHTML = `<div class="card-title">${t.name}</div><div class="section-label">今日のトレーニング</div>`;
     const list = document.createElement('div');
     t.items.forEach(item => {
-      const id = `train-${item}`;
+      const id = `train-${item.name}`;
       trainingItems.push(id);
       const el = document.createElement('div');
       el.className = 'check-item' + (checks[id] ? ' checked' : '');
-      el.innerHTML = `<div class="check-box"><svg viewBox="0 0 14 14" fill="none" stroke="${checks[id]?'#0A0A0B':'#F0EEE9'}" stroke-width="2" stroke-linecap="round"><polyline points="3 7 6 10 11 4"/></svg></div><div class="check-label">${item}</div>`;
+      el.innerHTML = `<div class="check-box"><svg viewBox="0 0 14 14" fill="none" stroke="${checks[id]?'#0A0A0B':'#F0EEE9'}" stroke-width="2" stroke-linecap="round"><polyline points="3 7 6 10 11 4"/></svg></div><div class="check-label">${item.name}<div class="check-sub">${item.target}</div></div>`;
       el.addEventListener('click', () => {
         checks[id] = !checks[id];
         LS.set(`checks-${ds}`, checks);
