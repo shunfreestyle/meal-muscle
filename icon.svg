@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0A0A0B"/>
+  <!-- Barbell -->
+  <rect x="128" y="208" width="56" height="96" rx="8" fill="#F5A623"/>
+  <rect x="328" y="208" width="56" height="96" rx="8" fill="#F5A623"/>
+  <rect x="184" y="240" width="144" height="32" rx="6" fill="#F5A623"/>
+  <!-- Progress arc -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#F5A623" stroke-width="12" stroke-opacity="0.15"/>
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#F5A623" stroke-width="12" stroke-linecap="round" stroke-dasharray="942" stroke-dashoffset="235" transform="rotate(-90 256 256)"/>
+  <!-- Small accent dots -->
+  <circle cx="256" cy="44" r="8" fill="#F5A623"/>
+</svg>
